@@ -1,0 +1,119 @@
+---
+title: "Data Exploration"
+author: "Carmen Hoyt"
+date: last-modified
+format:
+  html:
+      toc: true
+      code-fold: true
+editor: visual
+execute:
+  warning: false
+  messages: false
+editor_options: 
+  chunk_output_type: console
+---
+
+## Import Packages
+
+```{r}
+#| code-summary: Expand code
+library(tidyverse)
+library(janitor)
+library(here)
+#library(openxlsx)
+#library('readxl')
+```
+
+## Import Data
+
+```{r}
+#| code-summary: Expand code
+# Set filepath
+pathway <- "/capstone/seamissions/data/meds_capstone_project"
+
+# Set up import for .csv or .xlsx
+file_names <- list.files(here(pathway), pattern=paste0(c("*.xlsx","*.csv"), collapse="|"), full.names=TRUE)
+
+for (i in seq_along(file_names)) {
+  if(grepl('.*\\.csv', file_names[i])) {
+        table <- read_csv(file_names[i], show_col_types = FALSE)
+         } else {
+           table <- read_excel(file_names[i])
+    }
+  table <- table %>%
+  clean_names() 
+  if(str_detect(file_names[i], "non")) {
+    table_name <- substr(file_names[i], 64, 79)
+  } else {
+    table_name <- substr(file_names[i], 64, 76)
+  }
+  assign(table_name, table)
+}
+```
+
+## Clean Data
+
+- filter for `fishing` == TRUE
+- drop na for `flag`
+- pivot names to `ghg` and values to `sum_mt`
+
+```{r}
+#| code-summary: Expand code
+# Filter broadcasting data for fishing
+broadcasting_clean <- ais_emissions %>%
+  filter(fishing == TRUE)
+
+# Emissions of specific gasses by flag and vessel class
+emissions_flag_vessel <- broadcasting_clean %>%
+  group_by(flag, vessel_class) %>%
+  summarise(co2 = sum(emissions_co2_mt),
+            ch4 = sum(emissions_ch4_mt),
+            n2o = sum(emissions_n2o_mt),
+            nox = sum(emissions_nox_mt),
+            sox = sum(emissions_sox_mt),
+            pm = sum(emissions_pm_mt))%>%
+  pivot_longer(!c(flag, vessel_class), names_to = "ghg", values_to = "sum_mt")
+
+# Total emissions by flag and vessel class
+emissions_flag_vessel_summary <- emissions_flag_vessel %>%
+  group_by(flag, vessel_class) %>%
+  summarise(ghg_sum = sum(sum_mt)) 
+
+# Total emissions by flag
+flag_total <- emissions_flag_vessel %>%
+  group_by(flag) %>%
+  summarise(total_emissions = sum(sum_mt))
+
+# Top 5 emittors by flag
+flag_top_five <- flag_total[order(flag_total$total_emissions, decreasing = TRUE),] %>%
+  slice(1:5)
+
+# Add total emissions by flag to vessel class
+df <- inner_join(flag_top_five, emissions_flag_vessel_summary)
+
+# Visualize emissions by vessel type for top 5 countries
+ggplot(df, aes(x = flag, y = ghg_sum, fill = vessel_class)) +
+  geom_bar(stat = "identity", position = position_dodge2(preserve = "single")) +
+  theme_minimal()
+
+# Make individual country plot for China
+emissions_vessel_chn <- emissions_flag_vessel_summary %>%
+  filter(flag == "CHN") %>%
+  group_by(vessel_class) %>%
+  summarise(total = sum(ghg_sum))
+
+# Visualize emissions by vessel class for China
+emissions_vessel_chn %>%
+  ggplot(aes(x = vessel_class, y = total)) +
+  geom_bar(stat = "identity")
+
+# Visualize emissions by flag for top 5 emittors
+flag_top_five %>%
+  ggplot(aes(x = reorder(flag, -total_emissions), y = total_emissions)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Country",
+       y = "Total Emissions (mt)") +
+  theme_minimal()
+```
+
