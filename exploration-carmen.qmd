@@ -62,7 +62,8 @@ for (i in seq_along(file_names)) {
 #| code-summary: Expand code
 # Filter broadcasting data for fishing
 broadcasting_clean <- ais_emissions %>%
-  filter(fishing == TRUE)
+  filter(fishing == TRUE) %>%
+  drop_na(flag)
 
 # Emissions of specific gasses by flag and vessel class
 emissions_flag_vessel <- broadcasting_clean %>%
@@ -78,20 +79,60 @@ emissions_flag_vessel <- broadcasting_clean %>%
 # Total emissions by flag and vessel class
 emissions_flag_vessel_summary <- emissions_flag_vessel %>%
   group_by(flag, vessel_class) %>%
-  summarise(ghg_sum = sum(sum_mt)) 
+  summarise(ghg_sum = sum(sum_mt))
 
 # Total emissions by flag
 flag_total <- emissions_flag_vessel %>%
   group_by(flag) %>%
   summarise(total_emissions = sum(sum_mt))
 
+vessel_total <- emissions_flag_vessel %>%
+  group_by(vessel_class) %>%
+  summarise(total_emissions = sum(sum_mt))
+
 # Top 5 emittors by flag
-flag_top_five <- flag_total[order(flag_total$total_emissions, decreasing = TRUE),] %>%
-  slice(1:5)
+flag_top_five <- flag_total %>%
+  top_n(5, total_emissions)
+
+vessel_top_five <- vessel_total %>%
+  top_n(5, total_emissions)
 
 # Add total emissions by flag to vessel class
 df <- inner_join(flag_top_five, emissions_flag_vessel_summary)
 
+test <- df %>%
+  group_by(flag) %>%
+   top_n(3, ghg_sum)
+
+# Visualize top 5 countries with top 3 vessel types
+ggplot(test, aes(x = reorder(flag, -ghg_sum), y = ghg_sum, fill = vessel_class)) +
+  geom_col() +
+  scale_fill_manual(values = c("#8ed1fc", 
+                              "#32373c", 
+                              "firebrick", 
+                              "#ff6900", 
+                              "#fcb900", 
+                              "#e22e12", 
+                              "#1b4b87",
+                              "#8abbc7"),
+                    labels = c("Drifting Longlines",
+                               "Passenger",
+                               "Pole and Line",
+                               "Pots and Traps",
+                               "Set Longlines",
+                               "Squid Jigger",
+                               "Trawlers",
+                               "Tuna Purse Seines")) +
+  scale_x_discrete(labels = c("China", "Taiwan", "Russia", "Japan", "Korea")) +
+  labs(x = "Country",
+       y = "GHG Sum (mt)",
+       fill = "Vessel Type",
+       title = "Top 5 Emittors by Country and Vessel Type") +
+  theme_minimal()
+```
+
+```{r}
+#| code-summary: Expand code
 # Visualize emissions by vessel type for top 5 countries
 ggplot(df, aes(x = flag, y = ghg_sum, fill = vessel_class)) +
   geom_bar(stat = "identity", position = position_dodge2(preserve = "single")) +
@@ -116,3 +157,35 @@ flag_top_five %>%
        y = "Total Emissions (mt)") +
   theme_minimal()
 ```
+
+## Aesthetics
+
+GFW Colors:
+
+"#1b4b87"
+
+"#8abbc7"
+
+"#e22e12"
+
+"#00003c"
+
+"#f78da7"
+
+"#cf2e2e"
+
+"#ff6900"
+
+"#fcb900"
+
+"#7bdcb5"
+
+"#00d084"
+
+"#8ed1fc"
+
+"#0693e3"
+
+"#9b51e0"
+
+"#32373c"
