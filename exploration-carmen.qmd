@@ -21,6 +21,7 @@ editor_options:
 library(tidyverse)
 library(janitor)
 library(here)
+library(gghighlight)
 #library(openxlsx)
 #library('readxl')
 ```
@@ -102,17 +103,18 @@ df <- inner_join(flag_top_five, emissions_flag_vessel_summary)
 
 test <- df %>%
   group_by(flag) %>%
-   top_n(3, ghg_sum)
+ top_n(3, ghg_sum)
 
 # Visualize top 5 countries with top 3 vessel types
-ggplot(test, aes(x = reorder(flag, -ghg_sum), y = ghg_sum, fill = vessel_class)) +
+ggplot(df, aes(x = reorder(flag, ghg_sum), y = ghg_sum, fill = vessel_class)) +
   geom_col() +
+  gghighlight(vessel_class %in% c("drifting_longlines", "trawlers", "squid_jigger")) +
   scale_fill_manual(values = c("#8ed1fc", 
                               "#32373c", 
-                              "firebrick", 
+                              "#e22e12",
                               "#ff6900", 
                               "#fcb900", 
-                              "#e22e12", 
+                              "firebrick", 
                               "#1b4b87",
                               "#8abbc7"),
                     labels = c("Drifting Longlines",
@@ -128,6 +130,7 @@ ggplot(test, aes(x = reorder(flag, -ghg_sum), y = ghg_sum, fill = vessel_class))
        y = "GHG Sum (mt)",
        fill = "Vessel Type",
        title = "Top 5 Emittors by Country and Vessel Type") +
+  coord_flip() +
   theme_minimal()
 ```
 
