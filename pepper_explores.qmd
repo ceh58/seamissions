@@ -1,5 +1,58 @@
 ---
 title: Pepper explores seamissions data
 author: Nicole Pepper
+editor_options: 
+  chunk_output_type: console
 ---
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(ggplot2)
+library(terra)
+library(sf)
+```
+
+```{r}
+# Import vessel data
+broadcasting_vessels <- read_csv(here::here("data","meds_capstone_project","meds_capstone_ais_emissions_data_v20241121-004.csv"))
+dark_vessels <- read_csv(here::here("data","meds_capstone_project","meds_capstone_non_broadcasting_emissions_data_v20241125.csv"))
+```
+
+```{r}
+
+```
+
+```{r}
+# Initial data exploration
+head(broadcasting_vessels)
+unique(broadcasting_vessels$flag)
+
+```
+
+```{r}
+# Group by `flag`and sum `emissions_co2_mt`
+top_countries = broadcasting_vessels %>%
+  group_by(flag) %>% 
+  summarise(co2_mt = sum(emissions_co2_mt))
+
+# Sort by `co2_mt` and subset to top 10 countries
+top_countries = top_countries[order(top_countries$co2_mt, decreasing = TRUE),] %>% head(10) 
+
+```
+
+```{r}
+
+# Plot emissions by country
+ggplot(data = top_countries, aes(x = flag, y = co2_mt)) + 
+  geom_col(fill = "cornflowerblue",
+           alpha = 0.8) + 
+  theme_minimal() + 
+  labs(title = "Fishing Vessel Related CO2 Emissions by Country",
+       x = "Country",
+       y = "CO2 Emissions (metric tons)")
+
+```
 
