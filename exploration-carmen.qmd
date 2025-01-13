@@ -54,9 +54,9 @@ for (i in seq_along(file_names)) {
 
 ## Clean Data
 
-- filter for `fishing` == TRUE
-- drop na for `flag`
-- pivot names to `ghg` and values to `sum_mt`
+-   filter for `fishing` == TRUE
+-   drop na for `flag`
+-   pivot names to `ghg` and values to `sum_mt`
 
 ```{r}
 #| code-summary: Expand code
@@ -116,4 +116,3 @@ flag_top_five %>%
        y = "Total Emissions (mt)") +
   theme_minimal()
 ```
-
