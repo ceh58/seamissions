@@ -118,18 +118,13 @@ ggplot(df, aes(x = reorder(flag, ghg_sum), y = ghg_sum, fill = vessel_class)) +
                               "#1b4b87",
                               "#8abbc7"),
                     labels = c("Drifting Longlines",
-                               "Passenger",
-                               "Pole and Line",
-                               "Pots and Traps",
-                               "Set Longlines",
                                "Squid Jigger",
-                               "Trawlers",
-                               "Tuna Purse Seines")) +
-  scale_x_discrete(labels = c("China", "Taiwan", "Russia", "Japan", "Korea")) +
-  labs(x = "Country",
-       y = "GHG Sum (mt)",
+                               "Trawler")) +
+  scale_x_discrete(labels = c("Korea", "Japan", "Russia", "Taiwan", "China")) +
+  labs(x = "",
+       y = "Total GHG  Emissions (mt)",
        fill = "Vessel Type",
-       title = "Top 5 Emittors by Country and Vessel Type") +
+       title = "Top Emittors by Country and Vessel Type") +
   coord_flip() +
   theme_minimal()
 ```
